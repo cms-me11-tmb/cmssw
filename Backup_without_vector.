@@ -1,0 +1,513 @@
+// -*- C++ -*-
+//
+// Package:    DemoAnalyzer
+// Class:      DemoAnalyzer
+// 
+/**\class DemoAnalyzer DemoAnalyzer.cc Demo/DemoAnalyzer/plugins/DemoAnalyzer.cc
+
+Description: [one line class summary]
+
+Implementation:
+[Notes on implementation]
+ */
+//
+// Original Author:  jose valledimas
+//         Created:  Thu, 06 Mar 2014 03:55:34 GMT
+// $Id$
+//
+//
+
+// Sugeested Excercise (Jose)
+//Testing :D 
+
+#include "DataFormats/TrackReco/interface/Track.h"
+#include "DataFormats/TrackReco/interface/TrackFwd.h"
+#include "FWCore/MessageLogger/interface/MessageLogger.h"
+#include "FWCore/ServiceRegistry/interface/Service.h"
+#include "CommonTools/UtilAlgos/interface/TFileService.h"
+#include "DataFormats/CSCDigi/interface/CSCALCTDigiCollection.h"
+#include "DataFormats/CSCDigi/interface/CSCCLCTDigiCollection.h"
+
+
+// system include files
+#include <memory>
+
+// user include files
+#include "FWCore/Framework/interface/Frameworkfwd.h"
+#include "FWCore/Framework/interface/EDAnalyzer.h"
+
+#include "FWCore/Framework/interface/Event.h"
+#include "FWCore/Framework/interface/MakerMacros.h"
+
+#include "FWCore/ParameterSet/interface/ParameterSet.h"
+//
+// class declaration
+//
+
+class DemoAnalyzer : public edm::EDAnalyzer {
+    public:
+        explicit DemoAnalyzer(const edm::ParameterSet&);
+        ~DemoAnalyzer();
+
+        static void fillDescriptions(edm::ConfigurationDescriptions& descriptions);
+
+
+    private:
+        virtual void beginJob() override;
+        virtual void analyze(const edm::Event&, const edm::EventSetup&) override;
+        virtual void endJob() override;
+
+
+    private:
+        // ----------member data ---------------------------
+        unsigned int minTracks_;
+        TH1F * h_BX;
+        TH1F * ch_BX;
+        TH1F * dh_QA;
+        TH1F * eh_QC;      
+        TH1F * fh_WA;      
+        TH1F * gh_SC;   
+  //virtual void beginRun(edm::Run const&, edm::EventSetup const&) override;
+        //virtual void endRun(edm::Run const&, edm::EventSetup const&) override;
+        //virtual void beginLuminosityBlock(edm::LuminosityBlock const&, edm::EventSetup const&) override;
+        //virtual void endLuminosityBlock(edm::LuminosityBlock const&, edm::EventSetup const&) override;
+
+        // ----------member data ---------------------------
+};
+
+//
+// constants, enums and typedefs
+//
+
+//
+// static data member definitions
+//
+
+//
+// constructors and destructor
+//
+//DemoAnalyzer::DemoAnalyzer(const edm::ParameterSet& iConfig)
+
+//now do what ever initialization is needed
+
+DemoAnalyzer::DemoAnalyzer(const edm::ParameterSet& iConfig) :
+    minTracks_(iConfig.getUntrackedParameter<unsigned int>("minTracks",0))
+{
+ 
+    edm::Service<TFileService> fs; 
+     h_BX = fs->make<TH1F>( "BXALCT"  , "BX_{t}", 20.,  0.,20. );
+     ch_BX = fs->make<TH1F>( "BXCLCT"  , "BX_{t}", 20.,  0.,20. );
+     dh_QA = fs->make<TH1F>( "Q_ALCT"  , "BX_{t}", 20.,  0.,20. );
+     eh_QC = fs->make<TH1F>( "Q_CLCT"  , "BX_{t}", 20.,  0.,20. );
+     fh_WA = fs->make<TH1F>( "W_ALCT"  , "BX_{t}", 250.,  0.,250. );
+
+     gh_SC = fs->make<TH1F>( "S_CLCT"  , "BX_{t}", 250.,  0.,250. );
+ //now do what ever initialization is needed
+}
+
+DemoAnalyzer::~DemoAnalyzer()
+{
+
+    // do anything here that needs to be done at desctruction time
+    // (e.g. close files, deallocate resources etc.)
+
+}
+
+
+//
+// member functions
+//
+
+// ------------ method called for each event  ------------
+    void
+DemoAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
+{
+    using namespace edm;
+
+    Handle< CSCALCTDigiCollection > halcts;
+    iEvent.getByLabel("simCscTriggerPrimitiveDigis",  halcts);
+    const CSCALCTDigiCollection* alcts = halcts.product();
+    
+
+    Handle< CSCCLCTDigiCollection > hclcts;
+    iEvent.getByLabel("simCscTriggerPrimitiveDigis", hclcts);
+//    const CSCCLCTDigiCollection* clcts = hclcts.product();
+
+    int RtestAA=0;
+//    int RtestCA=0;
+    int RWG=0; 
+//    int RSN=0;   
+    int RtestAB=0;
+//    int RtestCB=0;
+    int RABX=0;
+    int RAQ=0;
+//    int RCQ=0;
+//    int RCBX=0;
+    int ns=0;
+    int ls=0;
+//    int cs=0;
+//    int cl=0;
+ //   int ABX;
+   int CBX=0;
+
+    for (CSCALCTDigiCollection::DigiRangeIterator  adetUnitIt = alcts->begin(); adetUnitIt != alcts->end(); adetUnitIt++)
+    {
+        const CSCDetId& id = (*adetUnitIt).first;
+        const CSCALCTDigiCollection::Range& range = (*adetUnitIt).second;
+
+
+        for (CSCALCTDigiCollection::const_iterator digiIt = range.first; digiIt != range.second; digiIt++)
+        {
+          if (id.station() == 1 and id.endcap() == 1 and (id.ring() == 1 or id.ring() == 4)){
+
+                        std::cout << "ME";
+                        if (id.endcap()==1) std::cout << "+";
+                        else std::cout << "-";
+                        
+                           std::cout << id.station() << "/";   
+                        if (id.station() == 1 and id.ring() == 4) {
+                            std::cout << "1 a";   //ME1/1a
+                            RtestAA=1;
+                        }
+ 
+                         if (id.station() == 1 and id.ring() == 1) {
+                            std::cout << "1 b";    //Me1/1b
+                            RtestAB=1;
+                          }
+                
+
+                        std::cout << ": ALCT BX = " << (*digiIt).getBX();
+                        std::cout<< ", WG = "<<(*digiIt).getKeyWG()<<" , Q=";   
+                        std::cout<< (*digiIt).getQuality()<<std::endl;
+
+                        RWG=(*digiIt).getKeyWG();
+                        RABX=(*digiIt).getBX();
+                        RAQ=(*digiIt).getQuality();
+
+
+
+  /* Still not really working TEST
+
+                      int itr=0;
+
+			
+
+                            for (CSCALCTDigiCollection::const_iterator digiIt2 = range.first; digiIt != range.second and itr<3; digiIt++){
+				const CSCDetId& id2 = (*adetUnitIt).first;                                
+                                if(RtestAB==1 and id2.station()==1 and id2.endcap()==1 and id2.ring()==4 and RWG==(*digiIt2).getKeyWG() and RABX==(*digiIt2).getBX() and RAQ==(*    digiIt2).getQuality()){
+                                    std::cout<<"Repeated in ME1/1a"<<std::endl;
+                                    std::cout<<"ME +"<<id2.station()<<"/1a"<<": ALCT BX = " << (*digiIt2).getBX()<<", WG = "<<(*digiIt2).getKeyWG()<<" , Q="<<(*digiIt2).getQuality()<<std::endl;
+
+                                    }
+
+                                if(RtestAA==1 and id2.station()==1 and id2.endcap()==1 and id2.ring()==1 and RWG==(*digiIt2).getKeyWG() and RABX==(*digiIt2).getBX() and RAQ==(*    digiIt2).getQuality()){
+                                                                  
+                                 std::cout<<"Repeated in ME1/1 b"<<std::endl;
+                                 std::cout<<"ME +"<<id2.station()<<"/"<<id2.ring()<<": ALCT BX = " << (*digiIt2).getBX()<<", WG = "<<(*digiIt2).getKeyWG()<<" , Q="<<(*digiIt2).getQuality()<<std::endl;
+                                    }
+
+                                itr++;
+                                std::cout<<"Itr ="<<itr<<std::endl;
+                            }
+            
+
+
+*/
+
+
+//Test One:
+
+                        for (CSCALCTDigiCollection::DigiRangeIterator  adetUnitIt2 = alcts->begin(); adetUnitIt2 != alcts->end(); adetUnitIt2++){
+                                const CSCDetId& id = (*adetUnitIt2).first;
+                                const CSCALCTDigiCollection::Range& range = (*adetUnitIt2).second;
+
+
+                            for (CSCALCTDigiCollection::const_iterator digiIt2 = range.first; digiIt2 != range.second; digiIt2++){
+
+ 
+
+
+                               if(RtestAB==1 and id.station()==1 and id.endcap()==1 and id.ring()==4 and RWG==(*digiIt2).getKeyWG() and RABX==(*digiIt2).getBX() ){
+                                ls++;                                 
+                                std::cout<<"Repeated in ME1/1 a"<<std::endl;
+				break;
+                            }
+
+                                if(RtestAA==1 and id.station()==1 and id.endcap()==1 and id.ring()==1 and RWG==(*digiIt2).getKeyWG() and RABX==(*digiIt2).getBX()){
+                                ns++;                                    
+                                std::cout<<"Repeated in ME1/1 b"<<std::endl;
+				break;
+}
+
+
+
+
+                    
+                                }
+
+
+                            if(ls>1 or ns>1) break;
+                        }
+
+                   
+
+			std::cout<<"Breaking news ns="<<ns<<" ls= "<<ls<<std::endl;
+                    if ((ns==0 and ls==0) or CBX==0) {
+
+                                 std::cout<< "Filling histograms" <<std::endl;
+                                 h_BX->Fill(RABX);
+                                 //std::cout<<"Filling histograms for ME11 :) "<<std::endl;
+                                 dh_QA->Fill(RAQ);
+                                 //std::cout<<"Filling  ALCT Quiality for ME11 :) "<<std::endl;
+                                 fh_WA->Fill(RWG);
+                                 //std::cout<<"Filling  ALCT KG for ME11 :) "<<std::endl;
+                                 CBX=1;
+                         
+                 }else{
+				std::cout<<"it got repeated"<<std::endl;
+			 }
+
+	 		    ns=0;
+	   	 	    ls=0;
+
+                            RtestAB=0;
+                            RtestAA=0;
+            }else {//std::cout<<"Not ME11"<<std::endl;
+             }
+
+                              
+        }
+            
+       
+    } 
+
+
+/*
+
+//CLCT Starts here
+
+    for (CSCCLCTDigiCollection::DigiRangeIterator  adetUnitIt = clcts->begin(); adetUnitIt != clcts->end(); adetUnitIt++)    {
+
+         const CSCDetId& id = (*adetUnitIt).first;
+         const CSCCLCTDigiCollection::Range& range = (*adetUnitIt).second;
+
+
+
+             for (CSCCLCTDigiCollection::const_iterator digiIt = range.first; digiIt != range.second; digiIt++)
+             {
+                  if (id.station() == 1 and id.endcap() == 1 and (id.ring() == 1 or id.ring() == 4)){
+ 
+                         std::cout << "ME";
+                         if (id.endcap()==1) std::cout << "+";
+                         else std::cout << "-";
+  
+                          std::cout << id.station() << "/";
+                          if (id.station() == 1 and id.ring() == 4) {
+                          std::cout << "1 a";
+                               RtestCA=1;
+                            }
+
+                              if (id.station() == 1 and id.ring() == 1) {
+                                std::cout << "1 b";
+                                RtestCB=1;
+                               }
+     
+     
+                            std::cout << ":CLCT BX = " << (*digiIt).getBX();
+                            std::cout<< ", SN = "<<(*digiIt).getStrip()<<" , Q=";
+                             std::cout<< (*digiIt).getQuality()<<std::endl;
+    
+                            RSN=(*digiIt).getStrip();
+                            RCBX=(*digiIt).getBX();
+                            RCQ=(*digiIt).getQuality();
+
+
+
+
+                            for (CSCCLCTDigiCollection::DigiRangeIterator  adetUnitIt2 = clcts->begin(); adetUnitIt2 != clcts->end(); adetUnitIt2++){
+                                 const CSCDetId& id = (*adetUnitIt2).first;
+                                 const CSCCLCTDigiCollection::Range& range = (*adetUnitIt2).second;
+ 
+ 
+                                 for (CSCCLCTDigiCollection::const_iterator digiIt2 = range.first; digiIt2 != range.second; digiIt2++){
+ 
+                                     if(RtestCB==1 and id.station()==1 and id.endcap()==1 and id.ring()==4 and RSN==(*digiIt2).getStrip() and RCBX==(*digiIt2).getBX() and RCQ==(*digiIt2).getQuality()){
+                                 cs++;
+                                 std::cout<<"Repeated in ME1/1 a"<<std::endl;
+				 break;
+                             }
+ 
+                                      if(RtestCA==1 and id.station()==1 and id.endcap()==1 and id.ring()==1 and RSN==(*digiIt2).getStrip() and RCBX==(*digiIt2).getBX() and RCQ==(*digiIt2).getQuality()){
+                                 cl++;
+                                 std::cout<<"Repeated in ME1/1 b"<<std::endl;
+				 break;}
+
+
+
+
+//                                        if (id.station()==1 and id.endcap()==1 and (id.ring()==4 or id.ring()==1) and RSN==(*digiIt2).getStrip() and RCBX==(*digiIt2).getBX() and RCQ==(*digiIt2).getQuality())
+
+
+
+                                 }
+                            if(ls>0 or ns>0) break;
+                         }
+			std::cout<<"Breaking news Cl="<<cl<<" Cs= "<<cs<<std::endl;
+
+                        if (cl==0 and cs==0) {
+ 				std::cout<<"Filling histograms"<<std::endl;
+                                    ch_BX->Fill(RCBX);
+                                    eh_QC->Fill(RCQ);
+                                    gh_SC->Fill(RSN);
+
+                          }else{
+
+				std::cout<<"It got repeated CLCT"<<std::endl;
+
+				}
+ 
+                             RtestAB=0;
+  	                     RtestAA=0;
+			     cl=0;
+			     cs=0;
+
+            
+
+
+                        }else {//std::cout<<"Not ME11"<<std::endl;
+                              }
+
+                                        
+                 }
+
+
+
+
+
+    }
+
+*/
+//End CLCT
+
+
+ /*
+/(Here Remove)
+///TEST Jose HW //
+
+for (CSCALCTDigiCollection::DigiRangeIterator  adetUnitIt = alcts->begin(); adetUnitIt != alcts->end(); adetUnitIt++)
+     {
+         const CSCDetId& id = (*adetUnitIt).first;
+
+         const CSCALCTDigiCollection::Range& range = (*adetUnitIt).second;
+         const CSCCLCTDigiCollection::DigiRangeIterator  adetUnitIt = clcts->begin();
+         const CSCCLCTDigiCollection::Range& range = (*adetUnitIt).second;
+
+         for (CSCALCTDigiCollection::const_iterator digiIt = range.first; digiIt != range.second; digiIt++)
+         {
+             std::cout << "ME";
+             if (id.endcap()==1) std::cout << "+";
+             else std::cout << "-";
+             std::cout << id.station() << "/";
+             if (id.station() == 1 and id.ring() == 4) std::cout << "1";
+             else std::cout << id.ring();
+             std::cout << "/" << id.chamber();
+             std::cout << ": ALCT BX = " << (*digiIt).getBX();
+             std::cout<< ", WG = "<<(*digiIt).getKeyWG()<<" , Q=";
+             std::cout<< (*digiIt).getQuality()<<std::endl;
+ 
+         if (id.station() == 1 and id.endcap() == 1 and (id.ring() == 1 or id.ring() == 4))
+            { dh_BX->Fill((*digiIt).getBX());
+             std::cout<<"Homework Working :) "<<std::endl;
+         }else {std::cout<<"Not ME11"<<std::endl;
+             }
+ 
+         }
+     }
+
+
+////
+
+*/
+
+/*
+    for (CSCALCTDigiCollection::DigiRangeIterator  adetUnitIt = alcts->begin(); adetUnitIt != alcts->end(); adetUnitIt++)
+    {
+        const CSCDetId& id = (*adetUnitIt).first;
+        const CSCALCTDigiCollection::Range& range = (*adetUnitIt).second;
+ 
+
+         for (CSCALCTDigiCollection::const_iterator digiIt = range.first; digiIt != range.second; digiIt++)
+
+                if (id.station() == 1 and id.endcap() == 1 and (id.ring() == 1 or id.ring() == 4)){
+                    ABX=(*digiIt).getBX();
+                
+                 const CSCDetId& id2 = (*adetUnitIt).first;
+                 const CSCCLCTDigiCollection::Range& range = (*adetUnitIt).second;
+                 const CSCALCTDigiCollection::const_iterator digiIt2
+                    CBX=(*digiIt2).getBX();
+
+            }
+
+        }
+    }
+*/
+
+
+}
+
+// ------------ method called once each job just before starting event loop  ------------
+    void 
+DemoAnalyzer::beginJob()
+{
+}
+
+// ------------ method called once each job just after ending the event loop  ------------
+    void 
+DemoAnalyzer::endJob() 
+{
+}
+
+// ------------ method called when starting to processes a run  ------------
+/*
+   void 
+   DemoAnalyzer::beginRun(edm::Run const&, edm::EventSetup const&)
+   {
+   }
+ */
+
+// ------------ method called when ending the processing of a run  ------------
+/*
+   void 
+   DemoAnalyzer::endRun(edm::Run const&, edm::EventSetup const&)
+   {
+   }
+ */
+
+// ------------ method called when starting to processes a luminosity block  ------------
+/*
+   void 
+   DemoAnalyzer::beginLuminosityBlock(edm::LuminosityBlock const&, edm::EventSetup const&)
+   {
+   }
+ */
+
+// ------------ method called when ending the processing of a luminosity block  ------------
+/*
+   void 
+   DemoAnalyzer::endLuminosityBlock(edm::LuminosityBlock const&, edm::EventSetup const&)
+   {
+   }
+ */
+
+// ------------ method fills 'descriptions' with the allowed parameters for the module  ------------
+void
+DemoAnalyzer::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
+    //The following says we do not know what parameters are allowed so do no validation
+    // Please change this to state exactly what you do use, even if it is no parameters
+    edm::ParameterSetDescription desc;
+    desc.setUnknown();
+    descriptions.addDefault(desc);
+}
+
+//define this as a plug-in
+DEFINE_FWK_MODULE(DemoAnalyzer);
